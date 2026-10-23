@@ -1115,6 +1115,8 @@ async fn web_send_resets_message_count_routes_and_delivers() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1182,6 +1184,8 @@ async fn web_send_persists_human_only_audience_for_manager_worker() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1227,6 +1231,8 @@ async fn web_send_persists_human_only_audience_for_manager_worker() {
     chat_flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1273,6 +1279,8 @@ async fn accepted_chat_send_records_run_context_for_callback() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1380,6 +1388,8 @@ async fn web_send_delivers_to_registered_provider_target_without_ws_connection()
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1425,6 +1435,8 @@ async fn failed_provider_web_send_uses_unified_system_message() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1472,6 +1484,8 @@ async fn deprecated_provider_stream_gray_match_keeps_provider_delivery_target() 
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1513,6 +1527,8 @@ async fn deprecated_provider_stream_gray_miss_keeps_provider_delivery_target() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1554,6 +1570,8 @@ async fn deprecated_provider_stream_gray_disabled_keeps_provider_delivery_target
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1613,6 +1631,8 @@ async fn deprecated_provider_stream_gray_does_not_change_inject_delivery_target(
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1706,6 +1726,8 @@ async fn provider_send_context_captures_bypass_headers_for_abort_routing() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1794,6 +1816,8 @@ async fn web_send_explicit_mentions_do_not_inject_manager_worker_workers() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1842,6 +1866,8 @@ async fn web_send_in_human_bot_dm_uses_dm_routing_and_keeps_frontend_echo() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -1895,6 +1921,8 @@ async fn web_send_in_human_bot_dm_omits_group_context_by_default() -> ServiceRes
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -1954,6 +1982,8 @@ async fn opted_in_channel_sender_identity_is_projected_to_bot_frame() -> Service
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_410025".to_string(),
             staff_no: "410025".to_string(),
@@ -2017,6 +2047,8 @@ async fn web_send_blocking_interceptor_prevents_bot_delivery() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -2062,6 +2094,8 @@ async fn web_send_delivery_frame_contains_recipient_group_context() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2132,6 +2166,8 @@ async fn web_send_with_session_id_routes_v2_by_substituting_wire_group_id() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2203,6 +2239,8 @@ async fn web_send_with_legacy_session_id_routes_v2_with_group_wire_id() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2260,6 +2298,8 @@ async fn web_send_with_session_id_routes_v3_with_explicit_bcs_session_id() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2352,6 +2392,8 @@ async fn web_send_to_provider_with_session_id_uses_explicit_bcs_session_id() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2440,6 +2482,8 @@ async fn web_send_direct_bot_projection_hides_bcs_group_context() -> ServiceResu
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2507,6 +2551,8 @@ async fn web_send_prefers_human_from_name_in_delivered_frame() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_2".to_string(),
             staff_no: "2".to_string(),
@@ -2562,6 +2608,8 @@ async fn web_send_inject_delivery_uses_event_frame() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -2619,6 +2667,8 @@ async fn web_send_delivers_to_private_group_targets() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -2673,6 +2723,8 @@ async fn web_send_partial_delivery_failure_is_represented_in_outcome() {
     let outcome = flow
         .handle_web_send(WebSendCommand {
             caller_execution: None,
+            caller_ingress: None,
+            speaking_lease: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -2722,6 +2774,7 @@ async fn group_chat_validates_sender_and_returns_legacy_delivery_projection() {
 
     let outcome = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -2774,6 +2827,7 @@ async fn group_chat_uses_session_participants_for_human_sender_validation() {
 
     let outcome = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_2".to_string(),
                 staff_no: "2".to_string(),
@@ -2821,6 +2875,7 @@ async fn group_chat_rejects_bot_that_is_not_a_session_participant() {
 
     let error = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Bot(BotActor {
                 bot_uuid: "bot-observer".to_string(),
             }),
@@ -2859,6 +2914,7 @@ async fn group_chat_rejects_session_from_another_group() {
 
     let error = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Bot(BotActor {
                 bot_uuid: "bot-driver".to_string(),
             }),
@@ -2895,6 +2951,7 @@ async fn group_chat_rejects_session_without_participants() {
 
     let error = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Bot(BotActor {
                 bot_uuid: "bot-driver".to_string(),
             }),
@@ -2933,6 +2990,7 @@ async fn group_chat_treats_requested_sender_id_literally_without_trimming() {
 
     let error = flow
         .handle_group_chat(GroupChatCommand {
+            caller_ingress: None,
             caller: CallerContext::Human(HumanActor {
                 actor_id: "human_1".to_string(),
                 staff_no: "1".to_string(),
@@ -2968,6 +3026,7 @@ async fn group_chat_uses_human_staff_number_as_display_name_when_speaking_as_own
     );
 
     flow.handle_group_chat(GroupChatCommand {
+        caller_ingress: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -4200,6 +4259,8 @@ fn human_web_send(
 ) -> WebSendCommand {
     WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -4365,6 +4426,8 @@ async fn web_send_persists_raw_mention_text_while_bots_receive_cleaned_text() {
 
     flow.handle_web_send(WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),
@@ -4423,6 +4486,8 @@ async fn web_send_persists_raw_mention_text_while_bots_receive_cleaned_text() {
 fn web_send_human_mentions(mention_actor_ids: Vec<String>) -> WebSendCommand {
     WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Human(HumanActor {
             actor_id: "human_1".to_string(),
             staff_no: "1".to_string(),

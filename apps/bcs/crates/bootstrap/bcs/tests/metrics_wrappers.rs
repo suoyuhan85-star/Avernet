@@ -420,7 +420,8 @@ impl MessageFlowService for MessageFlowFake {
             status: "ok".to_string(),
             bot_deliveries: vec![],
             frontend_deliveries: vec![],
-        })
+            real_run_id: None,
+})
     }
 
     async fn handle_task_complete(
@@ -633,6 +634,8 @@ fn group_delete_cmd() -> GroupDeleteCommand {
 fn web_send_cmd() -> WebSendCommand {
     WebSendCommand {
         caller_execution: None,
+        caller_ingress: None,
+        speaking_lease: None,
         caller: CallerContext::Public,
         group_id: "group-wrapper".to_string(),
         session_id: None,
@@ -652,6 +655,7 @@ fn web_send_cmd() -> WebSendCommand {
 
 fn group_chat_cmd() -> GroupChatCommand {
     GroupChatCommand {
+        caller_ingress: None,
         caller: CallerContext::Public,
         group_id: "group-wrapper".to_string(),
         requested_sender_id: None,
@@ -721,6 +725,7 @@ fn task_dispatch_cmd() -> TaskDispatchCommand {
         target_bot_id: "bot-target".to_string(),
         target_bot_name: None,
         payload: serde_json::json!({}),
+        caller_delegation: None,
     }
 }
 
