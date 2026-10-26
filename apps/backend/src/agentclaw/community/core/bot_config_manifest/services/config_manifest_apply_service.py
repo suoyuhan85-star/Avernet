@@ -214,6 +214,7 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
         engine_type: Optional[str] = None,
         bot_type: Optional[str] = None,
         carry_from_apply_id: Optional[str] = None,
+        expected_manifest_digest: str | None = None,
     ) -> ApplyAccepted:
         """Lock, validate, record ``RUNNING``, enqueue the work, return the id.
 
@@ -294,6 +295,7 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
                 bot=bot,
                 engine_type=engine_type,
                 bot_type=bot_type,
+                expected_manifest_digest=expected_manifest_digest,
             )
             apply_id = uuid.uuid4().hex
             started_at = datetime.now()
@@ -349,6 +351,7 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
                     engine_type=engine_type,
                     bot_type=bot_type,
                     carry_from_apply_id=carry_from_apply_id,
+                    expected_manifest_digest=expected_manifest_digest,
                 ),
                 APPLY_TASK_DEADLINE_SECONDS,
             )
@@ -529,6 +532,7 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
             bot=bot,
             engine_type=payload.get("engine_type"),
             bot_type=payload.get("bot_type"),
+            expected_manifest_digest=payload.get("expected_manifest_digest"),
         )
         ctx = self._context(
             bot_id=bot_id,
@@ -851,6 +855,7 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
         bot: Optional[dict],
         engine_type: Optional[str] = None,
         bot_type: Optional[str] = None,
+        expected_manifest_digest: str | None = None,
     ) -> dict:
         """The stored document, re-validated, or ``{}`` when there is none.
 
@@ -863,6 +868,9 @@ class BotConfigManifestApplyService(BotConfigManifestApplyServiceProtocol):
         that was appliable at ``PUT`` may not be now.
         """
         record = self._manifests.get(entity_id=entity_id, bot_id=bot_id)
+        if expected_manifest_digest:
+            from agentclaw.community.core.bot_config_manifest.binding import verify_bound_document
+            verify_bound_document(record.document if record else None, expected_manifest_digest)
         if record is None:
             return {}
         engine, kind = _engine_and_bot_type(bot, engine_type, bot_type)

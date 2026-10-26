@@ -346,6 +346,8 @@ from agentclaw.community.core.user_list.service import UserListService
 
 from agentclaw.community.api.expert_catalog_service import ExpertCatalogServiceProtocol
 from agentclaw.community.core.expert_market.service import ExpertCatalogService
+from agentclaw.community.api.expert_creation_service import ExpertCreationServiceProtocol
+from agentclaw.community.core.expert_market.creation import ExpertCreationService
 
 _PAIRS = [
     (BotKnowledgeServiceProtocol, BotKnowledgeService),
@@ -412,6 +414,7 @@ _PAIRS = [
     (SpaceSkillOfflineServiceProtocol, SpaceSkillOfflineService),
     (AcliCliServiceProtocol, AcliCliService),
     (ExpertCatalogServiceProtocol, ExpertCatalogService),
+    (ExpertCreationServiceProtocol, ExpertCreationService),
 ]
 
 _IDS = [f"{p.__name__}->{c.__name__}" for p, c in _PAIRS]

@@ -93,6 +93,7 @@ class BotConfigManifestApplyServiceProtocol(Protocol):
         engine_type: Optional[str] = None,
         bot_type: Optional[str] = None,
         carry_from_apply_id: Optional[str] = None,
+        expected_manifest_digest: str | None = None,
     ) -> ApplyAccepted:
         """Take the lock, validate, record ``RUNNING``, start the work, return.
 

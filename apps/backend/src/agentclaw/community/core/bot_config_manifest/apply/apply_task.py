@@ -72,6 +72,7 @@ def build_apply_task_payload(
     carry_from_apply_id: Optional[str] = None,
     engine_type: Optional[str] = None,
     bot_type: Optional[str] = None,
+    expected_manifest_digest: str | None = None,
 ) -> dict[str, Any]:
     """The task payload: identifiers, never state.
 
@@ -145,6 +146,7 @@ def build_apply_task_payload(
         "carry_from_apply_id": carry_from_apply_id,
         "engine_type": engine_type,
         "bot_type": bot_type,
+        **({"expected_manifest_digest": expected_manifest_digest} if expected_manifest_digest else {}),
     }
 
 

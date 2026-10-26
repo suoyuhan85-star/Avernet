@@ -25,6 +25,7 @@ from agentclaw.community.core.repository.protocols.bot import (
     BotConfigManifestApplyLockRepositoryProtocol,
     BotConfigManifestApplyRepositoryProtocol,
 )
+from agentclaw.community.core.bot_config_manifest.binding import ManifestBindingMismatchError
 from agentclaw.community.log import get_logger
 
 logger = get_logger()
@@ -78,6 +79,8 @@ def terminate_unstartable(
         started_at=parse_started_at(payload.get("started_at")),
         finished_at=datetime.now(),
         categories=(),
+        notes=("bound Manifest has changed; apply stopped without replacing the stored document",)
+        if isinstance(exc, ManifestBindingMismatchError) else (),
     )
     record_engine_failure(report, exc)
     try:

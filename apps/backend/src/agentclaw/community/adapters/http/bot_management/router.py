@@ -22,6 +22,7 @@ from agentclaw.community.adapters.http.auth.dependencies import require_operator
 from agentclaw.community.adapters.http.auth.models import AuthenticatedUser
 from agentclaw.community.core.access.admin_scopes import super_admin
 from agentclaw.community.adapters.http.dependencies import RequestContext, get_request_context
+from agentclaw.community.core.bot_management.expert_origin import ExpertOriginReadOnlyError
 from agentclaw.community.api.bot_service import BotServiceProtocol
 from agentclaw.community.api.bot_space_service import BotSpaceServiceProtocol
 from agentclaw.community.api.execution_identity_service import (
@@ -2661,6 +2662,8 @@ async def update_bot(
             data=result,
         )
 
+    except ExpertOriginReadOnlyError as exc:
+        return ApiResponse(success=False, message=str(exc), error_code=400, data=None)
     except BotNotFoundError:
         return ApiResponse(
             success=False,
@@ -3489,6 +3492,8 @@ async def update_bot_ext(
             message="ext 更新成功",
         )
 
+    except ExpertOriginReadOnlyError as exc:
+        return ApiResponse(success=False, message=str(exc), error_code=400, data=None)
     except BotNotFoundError:
         return ApiResponse(
             success=False,

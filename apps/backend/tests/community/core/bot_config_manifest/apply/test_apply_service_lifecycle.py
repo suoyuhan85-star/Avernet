@@ -1198,3 +1198,21 @@ def test_an_apply_that_cannot_be_rebuilt_terminates_instead_of_looping(world):
         "an apply that cannot be rebuilt must terminate, not poll forever"
     )
     assert accepted.apply_id  # the first apply is untouched
+
+
+def test_task_bound_manifest_modified_after_enqueue_fails_before_materialisation(world):
+    from agentclaw.community.core.bot_config_manifest.binding import manifest_digest
+    service, applies, locks, scripts, _ = world
+    queue = service._task_queue_provider()
+    queue.service = None  # Hold the accepted task until the user edits the document.
+    accepted = service.start_apply(
+        entity_id=_ENTITY, bot_id=_BOT, bot=_BOT_RECORD,
+        owner_id=_ENTITY, actor_id=_ENTITY,
+        expected_manifest_digest=manifest_digest(_DOCUMENT),
+    )
+    service._manifests._document = 'schema_version: 1\nscript:\n  body: "echo changed by user"\n'
+    service.run_apply_task(queue.enqueued[0][1])
+    report = service.get_apply(entity_id=_ENTITY, bot_id=_BOT, apply_id=accepted.apply_id)
+    assert report.status is ApplyStatus.FAILED
+    assert "bound Manifest" in str(report.as_payload())
+    assert "changed by user" in service._manifests._document
