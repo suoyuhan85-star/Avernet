@@ -14,19 +14,27 @@ from agentclaw.community.core.spaces.repository.models import (
     SpaceMemberModel,
     SpaceModel,
 )
-from agentclaw.community.kernel.knowledge import BotKnowledgeScope, KnowledgeError
+from agentclaw.community.kernel.knowledge import (
+    BotKnowledgeScope,
+    KnowledgeError,
+    KnowledgeSelectionStage,
+    require_selection_stage,
+)
 from agentclaw.community.plugin_api.database import DatabasePlugin
 from agentclaw.community.plugin_api.models import BotModel
 
 
-def binding_view(row: Binding, bot: BotModel) -> dict:
+def binding_view(
+    row: Binding, bot: BotModel, selection_stage: KnowledgeSelectionStage = "draft"
+) -> dict:
+    online = selection_stage == "online" and bot.bot_type == "service"
     return {
         "bot_id": bot.bot_id,
         "owner_id": bot.owner_id,
         "kb_id": row.kb_id,
-        "enabled": row.enabled,
+        "enabled": row.online_enabled if online else row.enabled,
         "revision": row.revision,
-        "runtime_selection": "current",
+        "runtime_selection": "online" if online else "current",
     }
 
 
@@ -236,6 +244,9 @@ class BotKnowledgeRepository:
                     )
                     session.add(row)
                 changed = not current_space or row.enabled != value
+                if not current_space:
+                    # Reclaiming a moved-space row must not carry old production access.
+                    row.online_enabled = False
                 row.space_id = bot.space_id
                 row.enabled = value
                 if changed or not previous:
@@ -248,6 +259,13 @@ class BotKnowledgeRepository:
             raise KnowledgeError("REVISION_CONFLICT") from None
 
     def list_enabled_current(self, scope: BotKnowledgeScope) -> tuple[str, ...]:
+        """Compatibility view: personal current or service draft/verification."""
+        return self.list_enabled(scope, selection_stage="draft")
+
+    def list_enabled(
+        self, scope: BotKnowledgeScope, *, selection_stage: KnowledgeSelectionStage
+    ) -> tuple[str, ...]:
+        require_selection_stage(selection_stage)
         with self.db.orm_session() as session:
             try:
                 bot = resolve_bot(session, scope)
@@ -256,13 +274,18 @@ class BotKnowledgeRepository:
                 if exc.status in (403, 404):
                     return ()
                 raise
+            enabled_column = (
+                Binding.online_enabled
+                if selection_stage == "online" and bot.bot_type == "service"
+                else Binding.enabled
+            )
             rows = (
                 session.query(Binding.kb_id)
                 .filter(
                     Binding.env == scope.env,
                     Binding.bot_pk == bot.id,
                     Binding.space_id == bot.space_id,
-                    Binding.enabled.is_(True),
+                    enabled_column.is_(True),
                 )
                 .order_by(Binding.kb_id)
                 .limit(101)
@@ -279,7 +302,9 @@ class BotKnowledgeRepository:
         actor_id: str,
         cursor: int = 0,
         limit: int = 20,
+        selection_stage: KnowledgeSelectionStage = "draft",
     ) -> dict:
+        require_selection_stage(selection_stage)
         with self.db.orm_session() as session:
             bot = resolve_bot(session, scope)
             require_editor(session, bot, actor_id)
@@ -297,8 +322,13 @@ class BotKnowledgeRepository:
             )
             page = rows[:limit]
             result = {
-                "items": [binding_view(r, bot) for r in page],
+                "items": [binding_view(r, bot, selection_stage) for r in page],
                 "next_cursor": page[-1].id if len(rows) > limit else None,
-                "runtime_selection": "current",
+                "runtime_selection": (
+                    "online"
+                    if selection_stage == "online" and bot.bot_type == "service"
+                    else "current"
+                ),
+                "selection_stage": selection_stage,
             }
             return result

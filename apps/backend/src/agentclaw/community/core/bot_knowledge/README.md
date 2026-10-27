@@ -1,14 +1,16 @@
 # Bot knowledge
 
-Current application selection only; external platforms own grants. The platform catalog uses
-the existing business Bot ID and target user identifier; no new UUID contract.
-Service Bots require the current draft editing state. No knowledge versions,
-release hooks, audit tables or membership synchronization are introduced.
+External platforms own grants. The platform catalog uses the existing business
+Bot ID and target user identifier; no new UUID contract. Service Bots edit only
+in draft and have separate working (`enabled`) and production (`online_enabled`)
+selection. Draft and verification share the working selection. Personal Bots
+keep their immediately effective current selection. Knowledge content is not
+version-frozen and no independent knowledge publication workflow is introduced.
 
 ## Context Boundary
 
 ```yaml
-purpose: Persist current knowledge selection independently of platform grants.
+purpose: Persist working and production knowledge selection independently of platform grants.
 provides:
   - BotKnowledgeService
   - BotKnowledgeRepository
@@ -96,3 +98,35 @@ indexes for fresh local schemas; that is not evidence they exist in an already
 running database. Deferring them does not change draft-check correctness, but
 production query/lock cost without them remains unverified. No automatic
 existing-database migration, production DDL, or deployment is performed here.
+
+## Draft and production selection (2026-10-26)
+
+`GET /api/bot-knowledge/{bot_id}?selection_stage=draft|online` explicitly selects
+the view; the default remains draft for compatibility. `items[].enabled` is the
+selected value. A service online view reports `runtime_selection=online`; personal
+Bots report current in both views. `list_enabled_current` remains a compatibility
+working-selection API; new consumers use `list_enabled(..., selection_stage=...)`.
+Production state is never writable through the settings API.
+
+`ac_bot_knowledge_binding` retains its identity and draft revision CAS. Production
+advancement does not increment that editor revision. Publication owns freezing
+the bounded enabled KB-ID set into its existing ext, and atomically replacing
+production selection when actual online deployment succeeds. Failed deployment
+or rollback admission is not production success. Snapshots cannot cross source
+Bot, tenant, environment or space. Reclaiming a binding after a space move clears
+its old production flag. Platform grants and native user ACL remain live gates,
+not snapshot fields. Actual MCP consumption wiring is outside this change.
+
+Fresh schemas use the updated create script. Existing databases must apply the
+review-only `apps/backend/sql/2026_10_26_bot_knowledge_online_selection.sql` before
+deploying the new code. It initializes production to false, not from draft:
+historical service publications without a trustworthy snapshot must republish.
+No migration is executed at startup or against any running environment here.
+
+### Publication integration opt-in
+
+`user_config.bot_knowledge_publication.enabled` is false by default. It controls
+only publication snapshot/promotion/restore effects, not knowledge management
+APIs. Disabled publication never queries the binding table; enabled integration
+requires the additive `online_enabled` column and fails closed on DB errors.
+Do not toggle off in the middle of active publication or restore operations.

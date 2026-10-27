@@ -3,6 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
+
+KnowledgeSelectionStage = Literal["draft", "online"]
+
+
+def require_selection_stage(value: str) -> KnowledgeSelectionStage:
+    if value not in ("draft", "online"):
+        raise ValueError("invalid selection_stage")
+    return value
 
 
 def require_knowledge_id(value: str, name: str) -> str:
@@ -31,3 +41,10 @@ class BotKnowledgeScope:
     def __post_init__(self) -> None:
         for name in ("bot_id", "owner_id", "env"):
             require_knowledge_id(getattr(self, name), name)
+
+
+@dataclass(frozen=True)
+class KnowledgePublicationPolicy:
+    """Opt-in publication effects; disabled deployments never access KB tables."""
+
+    enabled: bool = False

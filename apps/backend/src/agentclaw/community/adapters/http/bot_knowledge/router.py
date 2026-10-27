@@ -6,7 +6,11 @@ from agentclaw.community.adapters.http.auth.dependencies import get_current_user
 from agentclaw.community.adapters.http.auth.models import AuthenticatedUser
 from agentclaw.community.api.bot_knowledge_service import BotKnowledgeServiceProtocol
 from agentclaw.community.di import Injected
-from agentclaw.community.kernel.knowledge import BotKnowledgeScope, KnowledgeError
+from agentclaw.community.kernel.knowledge import (
+    BotKnowledgeScope,
+    KnowledgeError,
+    KnowledgeSelectionStage,
+)
 from agentclaw.community.utils.env_utils import get_current_env
 
 router = APIRouter(prefix="/api/bot-knowledge", tags=["bot-knowledge"])
@@ -38,6 +42,7 @@ def bindings(
     owner_id: str,
     cursor: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    selection_stage: KnowledgeSelectionStage = Query("draft"),
     user: AuthenticatedUser = Depends(get_current_user),
     service: BotKnowledgeServiceProtocol = Injected(BotKnowledgeServiceProtocol),
 ):
@@ -47,6 +52,7 @@ def bindings(
             actor_id=user.staffId,
             cursor=cursor,
             limit=limit,
+            selection_stage=selection_stage,
         )
     )
 
