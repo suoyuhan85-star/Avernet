@@ -22,6 +22,9 @@ def connection_service():
         target="runtime:20003", token="test-token", ws_url="wss://example.invalid/ws",
         baas_base_url="https://example.invalid", bot_uuid="bot-test", tenant="test",
         engine_port=20003, expires_at="2099-01-01T00:00:00Z",
+        # Avernet #2934 合入后 ws-info 面恒带 a2a_base_url 字段；SimpleNamespace
+        # 严格属性访问,缺字段即 AttributeError。
+        a2a_base_url="",
     )
     return service
 
