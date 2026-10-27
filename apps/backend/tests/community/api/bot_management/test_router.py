@@ -87,6 +87,11 @@ def _bind_bot_service(
                 binder.bind(AuthPlugin, to=auth)
             if auth_rel is not None:
                 binder.bind(AuthRelationshipPlugin, to=auth_rel)
+            from agentclaw.community.plugin_api.bot_create_extension import (
+                BotCreateExtension as _BCE,
+                NoopBotCreateExtension as _NoopBCE,
+            )
+            binder.bind(_BCE, to=_NoopBCE)
             if skill_set_factory is not None:
                 binder.bind(SkillSetServiceFactory, to=skill_set_factory)
             if policy_service is not None:
@@ -187,6 +192,12 @@ def client(mock_bot_service, mock_passport):
 
     # Override RequestContext dependency
     app.dependency_overrides[get_request_context] = lambda: _make_ctx()
+    from agentclaw.community.plugin_api.bot_create_extension import (
+        BotCreateExtension as _BotCreateExtension,
+        NoopBotCreateExtension as _NoopBotCreateExtension,
+    )
+
+    app.dependency_overrides[_BotCreateExtension] = _NoopBotCreateExtension
     mock_auth = MagicMock()
     # Default: passthrough — matches LocalAuth.authorize_entity_access.
     # Tests that need stricter (prod) behaviour override this.

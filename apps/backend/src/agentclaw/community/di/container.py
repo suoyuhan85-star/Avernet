@@ -46,6 +46,7 @@ from agentclaw.community.di.modules.manifest_delivery_module import (
 from agentclaw.community.di.modules.manifest_fetch_module import ManifestFetchModule
 from agentclaw.community.di.modules.bot_public_module import BotPublicModule
 from agentclaw.community.di.modules.bot_quota_module import BotQuotaModule
+from agentclaw.community.di.modules.bot_extension_module import BotExtensionModule
 from agentclaw.community.di.modules.task_module import TaskModule
 from agentclaw.community.di.modules.acli_clis_module import AcliClisModule
 from agentclaw.community.di.modules.caller_identity_module import CallerIdentityModule
@@ -188,6 +189,7 @@ def build_injector(
         DigitalEmployeeModule(),
         AgentSwarmModule(),
         BotQuotaModule(),
+        BotExtensionModule(),
         ManifestFetchModule(),
         ManifestDeliveryModule(),
         BotInventoryModule(),
