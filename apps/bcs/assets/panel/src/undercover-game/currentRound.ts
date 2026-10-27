@@ -48,6 +48,25 @@ export function completedMappedNodes(
   return nodes.filter((node) => node.status === 'completed' && Boolean(params.nodeActorMap[node.node_id]));
 }
 
+/**
+ * During a voting phase that names its tally node, a player's ballot is not
+ * published until that node completes. The panel then neither fetches nor
+ * shows the ballot and renders the node as cast from its graph status alone.
+ * This is a display rule only; BCS still serves node details to any Present
+ * Human of the run (known limitation of #2609 phase 1).
+ */
+export function withholdsVoteOutput(
+  node: StateMachineNode,
+  nodes: StateMachineNode[],
+  params: Pick<UndercoverGamePanelParams, 'phase' | 'host' | 'nodeActorMap' | 'voteTallyNodeId'>,
+): boolean {
+  const tally = params.voteTallyNodeId;
+  if (!tally || !params.phase.toLowerCase().includes('vot') || node.node_id === tally) return false;
+  const actorId = params.nodeActorMap[node.node_id];
+  if (!actorId || actorId === params.host.actorId) return false;
+  return !nodes.some((candidate) => candidate.node_id === tally && candidate.status === 'completed');
+}
+
 export function publicEventFromNodeDetail(
   detail: StateMachineNodeDetailResponse,
   params: Pick<UndercoverGamePanelParams, 'runId' | 'gameSessionId' | 'phase' | 'host' | 'nodeActorMap' | 'display'>,
@@ -56,11 +75,13 @@ export function publicEventFromNodeDetail(
   const actorId = params.nodeActorMap[node.node_id];
   const raw = node.artifact_text;
   const attempt = typeof node.attempt === 'number' && node.attempt > 0 ? node.attempt : 1;
-  if (!actorId || node.run_id && node.run_id !== params.runId || typeof raw !== 'string' || !raw.trim()) return undefined;
+  if (!actorId || node.run_id && node.run_id !== params.runId) return undefined;
 
   const voting = params.phase.toLowerCase().includes('vot');
   const isHost = actorId === params.host.actorId;
-  if (voting && !isHost) {
+  // A ballot is shown as cast from its completed status alone; BCS withholds
+  // sealed ballot text until the tally, so it may be absent here.
+  if (voting && !isHost && node.status === 'completed') {
     return {
       identity: `${params.gameSessionId ?? 'phase'}:${params.runId}:${node.node_id}:${attempt}`,
       runId: params.runId,
@@ -73,6 +94,7 @@ export function publicEventFromNodeDetail(
       source: 'node-detail',
     };
   }
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
   if (isHost && params.display?.showHostOutput === false) return undefined;
 
   return {

@@ -5821,3 +5821,6 @@ mod history_identity;
 
 #[path = "runtime_progression/history_persistence.rs"]
 mod history_persistence;
+
+#[path = "runtime_progression/multi_human_votes.rs"]
+mod multi_human_votes;
