@@ -452,6 +452,24 @@ class BotPublishRepositoryProtocol(Protocol):
         ...
 
     @abstractmethod
+    def restore_draft_knowledge_selection(
+        self, *, draft_publish_id: int, source_publish_id: int, operation_id: int,
+        expected_attempt: int, final_result: dict,
+    ) -> bool | None:
+        """Atomically restore draft selection and complete its native operation.
+
+        Validate the locked ledger identity, current attempt/state and persisted
+        deadline. Selection, restore marker, result and COMPLETED share one real
+        transaction. Completed replays are no-ops; terminal, expired or replaced
+        attempts never write. Source lineage/tenant/environment/space must match;
+        an unknown snapshot fails closed unless no binding was ever configured.
+        Return None only when publication integration is disabled (the caller
+        completes the legacy operation). Return False when the draft no longer
+        exists; enabled failures raise and must never select legacy completion.
+        """
+        ...
+
+    @abstractmethod
     def update_version(
         self,
         publish_id: int,

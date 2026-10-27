@@ -348,6 +348,8 @@ consumes:
   - get_server_host               # ditto
   - get_current_avernet_tenant    # tenant scoping (utils.avernet_tenant)
 internal_dependencies:
+  - agentclaw.community.core.bot_knowledge  # shared Bot lock and binding-model effects at publication CAS
+  - agentclaw.community.kernel.knowledge
   - agentclaw.community.core.space_knowledge.capture_guard
   - agentclaw.community.core.space_knowledge.repository
   - agentclaw.community.plugin_api.space_knowledge

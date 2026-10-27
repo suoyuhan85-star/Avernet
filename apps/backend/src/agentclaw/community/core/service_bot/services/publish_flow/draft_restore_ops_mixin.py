@@ -260,20 +260,30 @@ class DraftRestoreOpsMixin:
             **result,
         }
         try:
-            self._publish_operation_repo.update_result(operation_id, final_result)
-            if operation.state == PublishOperationState.PENDING.value:
-                completed = self._publish_operation_repo.complete_without_workflow(
-                    operation_id
-                )
-            else:
-                completed = self._publish_operation_repo.complete(operation_id)
-            if completed is None:
-                current = self._publish_operation_repo.get_by_id(operation_id)
-                if current is None or current.state != PublishOperationState.COMPLETED.value:
-                    raise PublishFlowServiceError(
-                        "草稿恢复 operation 无法完成: "
-                        f"operation_id={operation_id}, state={getattr(current, 'state', None)}"
+            restored = self._publish_service.restore_draft_knowledge_selection(
+                draft_publish_id=draft_publish_id,
+                source_publish_id=source_publish_id,
+                operation_id=operation_id,
+                expected_attempt=operation.attempt,
+                final_result=final_result,
+            )
+            if restored is None:
+                self._publish_operation_repo.update_result(operation_id, final_result)
+                if operation.state == PublishOperationState.PENDING.value:
+                    completed = self._publish_operation_repo.complete_without_workflow(
+                        operation_id
                     )
+                else:
+                    completed = self._publish_operation_repo.complete(operation_id)
+                if completed is None:
+                    current = self._publish_operation_repo.get_by_id(operation_id)
+                    if current is None or current.state != PublishOperationState.COMPLETED.value:
+                        raise PublishFlowServiceError(
+                            "草稿恢复 operation 无法完成: "
+                            f"operation_id={operation_id}, state={getattr(current, 'state', None)}"
+                        )
+            elif not restored:
+                raise PublishFlowServiceError("Knowledge draft selection restore rejected")
         except Exception as exc:
             raise DraftRestoreRetryableError(str(exc)) from exc
 

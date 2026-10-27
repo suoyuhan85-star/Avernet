@@ -37,9 +37,12 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Sequence
 
 from injector import inject
+
+from agentclaw.community.kernel.knowledge import KnowledgePublicationPolicy
 from sqlalchemy import func
 
 from agentclaw.community.core.models.skill import Skill
+from agentclaw.community.core.repository.implementations.publishing import knowledge_selection
 from agentclaw.community.core.service_bot.repository.config_artifact_offload import (
     ConfigArtifactOffloader,
 )
@@ -71,12 +74,29 @@ class BotPublishRepository(
 
     @inject
     def __init__(
-        self, db: DatabasePlugin, offload: ConfigArtifactOffloader
+        self, db: DatabasePlugin, offload: ConfigArtifactOffloader,
+        knowledge_policy: KnowledgePublicationPolicy = KnowledgePublicationPolicy(),
     ) -> None:
         self._db = db
         self.Model = BotPublishModel
         # Offloads an oversized config_artifact out of the ext TEXT column.
         self._offload = offload
+        self._knowledge_policy = knowledge_policy
+
+    def _publication_session(self):
+        # Preserve the original publication path unless explicitly opted in.
+        if self._knowledge_policy.enabled:
+            return self._db.transactional_orm_session()
+        return self._db.orm_session()
+
+    def _protect_knowledge_ext(self, db, publish_id, ext):
+        if self._knowledge_policy.enabled:
+            return knowledge_selection.protected_ext(db, publish_id, ext)
+        return ext
+
+    def _validate_knowledge_ext(self, ext_json):
+        if self._knowledge_policy.enabled:
+            knowledge_selection.validate_encoded_ext(ext_json)
 
     def _resolve_record(
         self, record: Optional[BotPublishRecord]
@@ -122,6 +142,7 @@ class BotPublishRepository(
             # under the DB-assigned publish_id. The upload runs inside the txn so
             # a put failure rolls the whole INSERT back (no dangling marker row).
             ext_json, pending = self._offload.prepare(ext, new_id, env)
+            self._validate_knowledge_ext(ext_json)
             row.ext = ext_json
             self._offload.upload(pending)
             db.flush()
@@ -468,7 +489,11 @@ class BotPublishRepository(
         target_status: str,
         source_status: Optional[str] = None,
     ) -> Optional[BotPublishRecord]:
-        with self._db.orm_session() as db:
+        if self._knowledge_policy.enabled and source_status == PublishStatus.DRAFT and target_status == PublishStatus.BUILDING:
+            with self._publication_session() as db:
+                frozen = knowledge_selection.freeze_build(db, publish_id)
+            return self.get_by_id(publish_id) if frozen else None
+        with self._publication_session() as db:
             query = db.query(self.Model).filter(
                 self.Model.id == publish_id
             )
@@ -492,10 +517,10 @@ class BotPublishRepository(
         ext: Dict[str, Any],
         source_status: Optional[str] = None,
     ) -> Optional[BotPublishRecord]:
-        ext_json, pending = self._offload.prepare(
-            ext, publish_id, get_current_env()
-        )
-        with self._db.orm_session() as db:
+        with self._publication_session() as db:
+            ext = self._protect_knowledge_ext(db, publish_id, ext)
+            ext_json, pending = self._offload.prepare(ext, publish_id, get_current_env())
+            self._validate_knowledge_ext(ext_json)
             query = db.query(self.Model).filter(
                 self.Model.id == publish_id
             )
@@ -535,8 +560,10 @@ class BotPublishRepository(
         """
         env = get_current_env()
         expected_json, _ = self._offload.prepare(expected_ext, publish_id, env)
-        ext_json, pending = self._offload.prepare(ext, publish_id, env)
-        with self._db.orm_session() as db:
+        with self._publication_session() as db:
+            ext = self._protect_knowledge_ext(db, publish_id, ext)
+            ext_json, pending = self._offload.prepare(ext, publish_id, env)
+            self._validate_knowledge_ext(ext_json)
             query = db.query(self.Model).filter(self.Model.id == publish_id)
             if expected_json is None:
                 query = query.filter(self.Model.ext.is_(None))
@@ -567,8 +594,15 @@ class BotPublishRepository(
         """CAS status and the exact serialized ext snapshot in one UPDATE."""
         env = get_current_env()
         expected_json, _ = self._offload.prepare(expected_ext, publish_id, env)
-        ext_json, pending = self._offload.prepare(ext, publish_id, env)
-        with self._db.orm_session() as db:
+        with self._publication_session() as db:
+            online = None
+            if self._knowledge_policy.enabled and source_status == PublishStatus.ONLINE_PUB and target_status == PublishStatus.SUCCESS:
+                online = knowledge_selection.prepare_online(db, publish_id, expected_json)
+                if online is None:
+                    return None
+            ext = self._protect_knowledge_ext(db, publish_id, ext)
+            ext_json, pending = self._offload.prepare(ext, publish_id, env)
+            self._validate_knowledge_ext(ext_json)
             query = db.query(self.Model).filter(
                 self.Model.id == publish_id,
                 self.Model.status == source_status,
@@ -587,6 +621,8 @@ class BotPublishRepository(
             )
             if affected > 0:
                 self._offload.upload(pending)
+                if online is not None:
+                    knowledge_selection.replace_online(db, *online)
         if affected == 0:
             return None
         return self.get_by_id(publish_id)
@@ -604,9 +640,8 @@ class BotPublishRepository(
     ) -> Optional[BotPublishRecord]:
         """Fence Offline against the moment an Artifact becomes replayable."""
         expected_json, _ = self._offload.prepare(expected_ext, publish_id, env)
-        ext_json, pending = self._offload.prepare(ext, publish_id, env)
         uuids = tuple(sorted(set(center_skill_uuids)))
-        with self._db.orm_session() as db:
+        with self._publication_session() as db:
             skill_ids = [
                 int(value[0])
                 for value in db.query(Skill.id)
@@ -627,6 +662,9 @@ class BotPublishRepository(
                 )
                 require_skill_online(skill)
 
+            ext = self._protect_knowledge_ext(db, publish_id, ext)
+            ext_json, pending = self._offload.prepare(ext, publish_id, env)
+            self._validate_knowledge_ext(ext_json)
             query = db.query(self.Model).filter(
                 self.Model.id == publish_id,
                 self.Model.status == source_status,
@@ -663,13 +701,17 @@ class BotPublishRepository(
         restored_to_status: str,
     ) -> tuple[bool, bool]:
         env = get_current_env()
-        demoted_json, demoted_pending = self._offload.prepare(
-            demoted_ext, demoted_publish_id, env
-        )
-        restored_json, restored_pending = self._offload.prepare(
-            restored_ext, restored_publish_id, env
-        )
-        with self._db.orm_session() as db:
+        with self._publication_session() as db:
+            baseline = None
+            if self._knowledge_policy.enabled and demoted_from_status == PublishStatus.SUCCESS and restored_from_status == PublishStatus.UPGRADED:
+                baseline = knowledge_selection.prepare_rollback_base(db, demoted_publish_id, restored_publish_id)
+            demoted_ext = self._protect_knowledge_ext(db, demoted_publish_id, demoted_ext)
+            restored_ext = self._protect_knowledge_ext(db, restored_publish_id, restored_ext)
+            restored_ext = knowledge_selection.with_rollback_base(restored_ext, baseline)
+            demoted_json, demoted_pending = self._offload.prepare(demoted_ext, demoted_publish_id, env)
+            restored_json, restored_pending = self._offload.prepare(restored_ext, restored_publish_id, env)
+            self._validate_knowledge_ext(demoted_json)
+            self._validate_knowledge_ext(restored_json)
             demoted_affected = (
                 db.query(self.Model)
                 .filter(
@@ -700,6 +742,11 @@ class BotPublishRepository(
                     synchronize_session=False,
                 )
             )
+            if self._knowledge_policy.enabled and not (demoted_affected and restored_affected):
+                # A rejected pair is not a partial success. Roll back even when
+                # the other CAS matched, before uploading any offloaded artifact.
+                db.rollback()
+                return False, False
             # Upload offloaded artifacts only for rows that actually took the write
             # (inside the txn so a put failure rolls both flips back together).
             if demoted_affected > 0:
@@ -707,6 +754,28 @@ class BotPublishRepository(
             if restored_affected > 0:
                 self._offload.upload(restored_pending)
         return demoted_affected > 0, restored_affected > 0
+
+    def restore_draft_knowledge_selection(
+        self,
+        *,
+        draft_publish_id: int,
+        source_publish_id: int,
+        operation_id: int,
+        expected_attempt: int,
+        final_result: dict,
+    ) -> bool | None:
+        """None selects legacy completion; enabled failures never fall back."""
+        if not self._knowledge_policy.enabled:
+            return None
+        with self._publication_session() as db:
+            return knowledge_selection.restore_draft(
+                db,
+                draft_publish_id=draft_publish_id,
+                source_publish_id=source_publish_id,
+                operation_id=operation_id,
+                expected_attempt=expected_attempt,
+                final_result=final_result,
+            )
 
     def update_version(
         self,

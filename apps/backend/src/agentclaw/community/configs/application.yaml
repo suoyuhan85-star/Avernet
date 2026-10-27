@@ -65,6 +65,10 @@ module_config:
 
 # 用户自定义配置 - 可以在这里添加任何自定义字段
 user_config:
+  # Publication-only integration; ordinary publishing has no KB schema dependency.
+  bot_knowledge_publication:
+    enabled: false
+
   app:
     title: "My SOFAPy App"
     version: "1.0.0"

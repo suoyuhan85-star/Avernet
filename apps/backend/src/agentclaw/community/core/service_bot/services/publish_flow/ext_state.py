@@ -26,6 +26,7 @@ from agentclaw.community.core.service_bot.services.publish_flow.errors import (
     PublishFlowServiceError,
 )
 from agentclaw.community.core.service_bot.types import PublishStage
+from agentclaw.community.kernel.knowledge import KnowledgeError
 
 if TYPE_CHECKING:
     from agentclaw.community.core.channel.services.engine_overrides_reader import (
@@ -77,6 +78,12 @@ class PublishExtState:
         if not latest_record:
             raise PublishNotFoundError(f"Publish order not found: {publish_id}")
         return copy.deepcopy(latest_record.ext or {}), copy.deepcopy(latest_record.ext)
+
+    @staticmethod
+    def require_knowledge_snapshot(expected: dict | None, latest_ext: dict) -> None:
+        """An old build/deploy result cannot adopt a new publish generation."""
+        if latest_ext.get("knowledge_selection_snapshot") != expected:
+            raise KnowledgeError("KNOWLEDGE_PUBLISH_SUPERSEDED")
 
     def mutate_and_update_ext(
         self,

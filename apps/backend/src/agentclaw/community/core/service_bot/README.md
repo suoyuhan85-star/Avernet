@@ -39,6 +39,7 @@ consumes:
   - "PassportPlugin"
   - "UserListRepositoryProtocol"
 internal_dependencies:
+  - agentclaw.community.kernel.knowledge  # fence asynchronous publication results by frozen selection
   - agentclaw.community.kernel.file_count
   - agentclaw.community.plugin_api.file_count_runtime
   - agentclaw.community.core.base

@@ -161,6 +161,7 @@ def _pf(*args, **kw):
             return image_policy_from_ext(record)
 
         publish_service.resolve_publish_image_pin.side_effect = _resolve_image_policy
+        publish_service.restore_draft_knowledge_selection.return_value = None
     if "channel_overrides_reader" not in kw:
         # Default to "no channels for this stage" ({}), so promotion delivers the
         # base artifact with channels cleared — tests that care about channels pass
