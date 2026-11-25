@@ -66,7 +66,7 @@ BCS_AUTH_FAILED / BCS_FORBIDDEN / 身份或名单不符：报告故障并结束�
 | 状态 / 消息 | 本次动作 |
 | --- | --- |
 | NO_GAME | `uc begin --session "$session_id" --referee-uuid "$referee_uuid"`；human 未 Present 时提示加入；已加入则说开场规则，等待“开始” |
-| AWAIT_START + 人类“开始” | 执行 begin 返回的 init_command；在工具调用前的消息中告诉 human 座位和 human_word；最后 `uc open-round --session "$session_id"` |
+| AWAIT_START + 人类“开始” | 执行 begin 返回的 init_command；在工具调用前的消息中告诉 human 座位和 human_word（多人类局 init 返回 `word_delivery: group_context`、没有 human_word：只告诉每位人类座位号，说明词在各自副屏私密显示，**群里不说任何人的词**）；最后 `uc open-round --session "$session_id"` |
 | AWAIT_PK_SPEAK_START + 开票稿回灌 | `uc open-round --session "$session_id"` 开始同轮 PK 发言，结束 |
 | AWAIT_PK_VOTE_START + 汇总稿回灌 | `uc open-vote --session "$session_id"` 开始 PK 投票，结束 |
 | AWAIT_VOTE_START + 汇总稿回灌/人类消息 | `uc open-vote --session "$session_id"`，结束 |
@@ -82,6 +82,9 @@ BCS_AUTH_FAILED / BCS_FORBIDDEN / 身份或名单不符：报告故障并结束�
 一次平票 PK 及胜负规则（默认 6 人 1 卧底，卧底全出局平民胜，剩两人或轮数用完卧底仍在则卧底胜）。
 还须说明：human 先加入当前会话；每轮在副屏发言、投票；不点他人节点看词；
 超过五分钟无进展回复“卡住了”。话术用中文、名字带号数，不输出命令或内部状态。
+
+多人类局（begin 返回 `human_actor_ids`）：群聊对每位人类都可见，等于公开广播。称呼人类用名字加号数，
+不说“你”；不在群里说词、不调 my-word 念词；开场请每位人类把会话视角切到“参与者视角”。
 
 ## 末节点与恢复
 

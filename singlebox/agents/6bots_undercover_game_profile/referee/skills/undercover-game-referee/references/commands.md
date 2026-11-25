@@ -92,6 +92,11 @@ uc init --session S --referee-uuid R --human human_123 \
 **`human_word` 是人类玩家自己那个词**，也是全场唯一一个我可以说出口的词：群聊是我和他
 的私密双人频道，Bot 收不到。发牌时念给他一次（S1 第 2 步），别的座位的词脚本不会给我。
 
+**多人类局**：`--human` 每位人类一次，`--players N` 指定总人数（4～8，从会话 Bot 中随机选取，至少 1 个
+Bot）。脚本为每位人类建一条只有主持人和本人可读的私有 Group Context 条目，返回 `human_seats` 和
+`word_delivery: group_context`，**没有 `human_word`**。写入失败或条目同名冲突时返回错误且不发牌，
+不要改成在群里说词。
+
 `--referee-uuid` 是 begin/init 的必填参数，仅使用本次投递 ID；不要传给 open-round/open-vote。
 
 ### `status`
@@ -262,6 +267,7 @@ uc my-word --session S
 
 人类玩家忘了自己的词时用。返回 `human_seat` 和 `human_word`，只有他自己那一个词，
 随时可以调、次数不限。**只说给他一个人听**——虽然群聊本来就只有他看得到。
+多人类局不返回词，只返回提示：请他在自己的副屏查看。
 
 ### `mask`
 
