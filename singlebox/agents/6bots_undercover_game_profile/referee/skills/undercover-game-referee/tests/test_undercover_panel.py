@@ -62,6 +62,9 @@ class UndercoverPanelParamsTest(unittest.TestCase):
             "vote_1": "human-1", "vote_2": "bot-a",
             "tally": "referee-1",
         })
+        self.assertEqual(vote["voteTallyNodeId"], "tally")
+        self.assertEqual(vote["nodeActorMap"][vote["voteTallyNodeId"]], vote["host"]["actorId"])
+        self.assertNotIn("voteTallyNodeId", speech)
         player_by_id = {player["actorId"]: player for player in speech["players"]}
         self.assertEqual(
             [(actor_id, player_by_id[actor_id]["seatNumber"], player_by_id[actor_id]["displayName"])

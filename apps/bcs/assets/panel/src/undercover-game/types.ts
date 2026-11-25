@@ -29,6 +29,8 @@ export interface UndercoverGamePanelParams {
   publicHistory: PublicHistoryRound[]; pkCandidates?: string[]; voteHistory?: PublicVoteRound[]; rules: PublicRules; voteCandidates?: VoteCandidate[]; apiBaseUrl?: string; currentViewerActorId?: string;
   currentAction?: CurrentAction; display?: PublicDisplayFlags; pollingInterval?: number; autoRefresh?: boolean; maxResponseBytes?: number;
   resultFile?: string;
+  /** Voting phases: the node whose completion publishes this round's ballots. */
+  voteTallyNodeId?: string;
 }
 export interface PanelAction { type: 'send_message'; content: string }
 export interface UndercoverGamePanelProps extends Partial<UndercoverGamePanelParams> {

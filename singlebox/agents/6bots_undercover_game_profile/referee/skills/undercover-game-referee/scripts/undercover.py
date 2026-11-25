@@ -691,6 +691,9 @@ def public_panel_projection(state: dict[str, Any], kind: str, attempt: int) -> d
         "currentViewerActorId": state["human_actor_id"], "currentAction": current_action,
         "display": {"showVoteResults": False, "showHostOutput": True, "showTimer": True},
     }
+    if kind == "vote":
+        # The panel withholds ballots until this node completes (#2609).
+        params["voteTallyNodeId"] = "tally"
     if is_pk(state):
         params["pkCandidates"] = [actor_id_for(seat_of(state, seat), state) for seat in current_stage(state)["order"]]
     vote_history = public_vote_history(state)

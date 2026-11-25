@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require=createRequire(import.meta.url);const api=require('../../dist/index.umd.js');
-const {ApiRequestError,eligibleVoteCandidates,getSeatCoordinates,latestAttemptEvents,mapPublicOutputEvents,mergePublicOutputEvents,normalizeCurrentRoundUpstream,normalizePanelParams,normalizeUndercoverGameViewModel,parsePrivateActionContext,publicEventFromNodeDetail,requestJson,serializeVoteAbstain,serializeVoteTarget,spriteUrl,sprites,truncateBubbleText,unicodeLength,validateSpeech}=api;
+const {ApiRequestError,withholdsVoteOutput,eligibleVoteCandidates,getSeatCoordinates,latestAttemptEvents,mapPublicOutputEvents,mergePublicOutputEvents,normalizeCurrentRoundUpstream,normalizePanelParams,normalizeUndercoverGameViewModel,parsePrivateActionContext,publicEventFromNodeDetail,requestJson,serializeVoteAbstain,serializeVoteTarget,spriteUrl,sprites,truncateBubbleText,unicodeLength,validateSpeech}=api;
 assert.equal(api.joinUrl('/api/','state-machine-runs'),'/api/state-machine-runs');
 assert.deepEqual(api.unwrapEnvelope({code:20000,request_id:'r',data:{ok:true}}),{ok:true});
 await assert.rejects(requestJson('/bcnproxy','/pending-human-nodes',{},async()=>new Response('<!DOCTYPE html><html>PRIVATE_PAGE</html>',{status:200,headers:{'content-type':'text/html'}})),e=>e instanceof ApiRequestError&&/JSON/.test(e.message)&&!/PRIVATE_PAGE|find/.test(e.message));
@@ -35,6 +35,18 @@ assert.equal(speechDetail.text,'来自节点详情的公开发言');
 assert.equal(speechDetail.source,'node-detail');
 const voteDetail=publicEventFromNodeDetail({node:{node_id:'node-b',run_id:'run-example',status:'completed',attempt:1,artifact_text:'{"kind":"vote","target_actor_id":"a"}'}},params);
 assert.equal(voteDetail.text,'已投票');
+const graphOnlyVote=publicEventFromNodeDetail({node:{node_id:'node-b',run_id:'run-example',status:'completed',attempt:1}},params);
+assert.equal(graphOnlyVote.text,'已投票','an unfetched ballot still shows as cast from graph status');
+// Ballots are withheld until the named tally node completes (#2609 phase 1).
+const tallyParams=normalizePanelParams({...params,voteTallyNodeId:'node-host'});
+const castB={node_id:'node-b',status:'completed'};
+assert.equal(withholdsVoteOutput(castB,[castB,{node_id:'node-host',status:'running'}],tallyParams),true);
+assert.equal(withholdsVoteOutput(castB,[castB,{node_id:'node-host',status:'completed'}],tallyParams),false,'released once the tally completes');
+assert.equal(withholdsVoteOutput({node_id:'node-host',status:'completed'},[],tallyParams),false,'host output is never withheld');
+assert.equal(withholdsVoteOutput(castB,[castB],params),false,'without voteTallyNodeId the legacy behaviour is unchanged');
+assert.equal(withholdsVoteOutput(castB,[castB],normalizePanelParams({...tallyParams,phase:'speaking'})),false,'speech is never withheld');
+assert.throws(()=>normalizePanelParams({...params,voteTallyNodeId:'node-b'}),/voteTallyNodeId must name a host node/);
+assert.equal(publicEventFromNodeDetail({node:{node_id:'node-a',run_id:'run-example',status:'completed',attempt:1}},speakingParams),undefined,'speech without text stays hidden');
 assert.doesNotMatch(JSON.stringify(voteDetail),/target_actor_id|"a"/);
 assert.equal(publicEventFromNodeDetail({node:{node_id:'node-a',run_id:'other-run',status:'completed',artifact_text:'stale secret'}},speakingParams),undefined);
 
