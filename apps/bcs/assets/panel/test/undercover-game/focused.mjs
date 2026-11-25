@@ -57,4 +57,32 @@ assert.deepEqual(merged.map(x=>x.text),['新尝试']);
 const detailModel=normalizeUndercoverGameViewModel(speakingParams,{run:{run_id:'run-example',status:'running'},nodes:[{node_id:'node-a',status:'completed',attempt:2}]},[],[],[older,newer]);
 assert.equal(detailModel.actors.find(x=>x.actor.actorId==='a').latestOutput.text,'新尝试');
 
+// #2609 multi-Human: private word from Group Context; the readable entry also identifies the viewer's seat.
+{
+  const {resolvePrivateWord,privateWordContextName,parsePrivateWordContent,sceneSeatGeometry}=api;
+  const players=[{actorId:'h1',displayName:'H1',seatNumber:1,isHuman:true},{actorId:'b2',displayName:'B2',seatNumber:2},{actorId:'h3',displayName:'H3',seatNumber:3,isHuman:true}];
+  const multi=normalizePanelParams({runId:'r',groupId:'g',sessionId:'g:s',phase:'speaking',round:1,host:{actorId:'host',displayName:'Host'},seatOrder:['h1','b2','h3'],players,nodeActorMap:{},privateWord:{contextKey:'0123abcd0123abcd',scopeLevel:'session'}});
+  assert.deepEqual(multi.privateWord,{contextKey:'0123abcd0123abcd',scopeLevel:'session'});
+  assert.throws(()=>normalizePanelParams({...multi,privateWord:{contextKey:'../x',scopeLevel:'session'}}),/privateWord/);
+  assert.throws(()=>normalizePanelParams({...multi,privateWord:{contextKey:'0123abcd',scopeLevel:'group'}}),/privateWord/);
+  assert.equal(privateWordContextName('0123abcd0123abcd',3),'word_0123abcd0123abcd_seat3');
+  assert.equal(parsePrivateWordContent('你的词语是：灯塔'),'灯塔');assert.equal(parsePrivateWordContent('灯塔'),undefined);
+  // The viewer owns seat 3: seat 1 answers 403, seat 3 answers its entry; only Human seats are probed.
+  const asked=[];const own=(items)=>async(url,init)=>{const body=JSON.parse(init.body);asked.push({url,name:body.name,scopes:body.scope_levels,method:init.method});if(body.name.endsWith('_seat3'))return new Response(JSON.stringify({items}),{status:200});return new Response(JSON.stringify({status:'permission_denied'}),{status:403})};
+  const word=await resolvePrivateWord(multi,undefined,own([{name:'word_0123abcd0123abcd_seat3',scope_level:'session',content:'你的词语是：灯塔'}]));
+  assert.deepEqual(word,{seatNumber:3,actorId:'h3',word:'灯塔'});
+  assert.deepEqual(asked.map(x=>x.name),['word_0123abcd0123abcd_seat1','word_0123abcd0123abcd_seat3']);
+  assert.ok(asked.every(x=>x.method==='POST'&&x.url==='/bcnproxy/groupcontext/get?groupId=g&sessionId=g%3As'&&JSON.stringify(x.scopes)==='["session"]'));
+  // Decoys: wrong scope, wrong name, or more than one item are never read as the word.
+  for(const items of [[{name:'word_0123abcd0123abcd_seat3',scope_level:'group',content:'你的词语是：假'}],[{name:'word_x_seat3',scope_level:'session',content:'你的词语是：假'}],[{name:'word_0123abcd0123abcd_seat3',scope_level:'session',content:'你的词语是：A'},{name:'word_0123abcd0123abcd_seat3',scope_level:'session',content:'你的词语是：B'}]])assert.equal(await resolvePrivateWord(multi,undefined,own(items)),undefined);
+  // Two readable entries mean something is wrong: show nothing rather than guess.
+  await assert.rejects(resolvePrivateWord(multi,undefined,async(url,init)=>new Response(JSON.stringify({items:[{name:JSON.parse(init.body).name,scope_level:'session',content:'你的词语是：词'}]}),{status:200})),/不止一个/);
+  // A missing route (nextgen namespace without Group Context, RFC §4.3) is reported, not hidden.
+  await assert.rejects(resolvePrivateWord(multi,undefined,async()=>new Response('{}',{status:404})),/访问不到/);
+  assert.equal(await resolvePrivateWord({...multi,privateWord:undefined},undefined,async()=>{throw new Error('must not fetch')}),undefined);
+  // 7-8 seats spread out like the six-seat presets; six seats keep the presets.
+  for(const n of [7,8])for(const c of ['wide','medium']){const seats=sceneSeatGeometry(Array.from({length:n},(_,i)=>`p${i}`),c);for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)assert.ok(Math.hypot(seats[i].x-seats[j].x,seats[i].y-seats[j].y)>=20,`${n} seats ${i}/${j} overlap`)}
+  assert.deepEqual(sceneSeatGeometry(['a','b','c','d','e','f'],'wide').map(s=>[s.x,s.y]),[[72,47],[86,64],[70,83],[30,83],[14,64],[28,47]]);
+}
+
 console.log('Focused undercover-game behavior tests passed.');

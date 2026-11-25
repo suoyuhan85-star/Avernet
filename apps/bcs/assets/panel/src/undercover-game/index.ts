@@ -3,6 +3,7 @@ export * from './actionContext';
 export * from './api';
 export * from './contracts';
 export * from './currentRound';
+export * from './privateWord';
 export * from './layout';
 export * from './types';
 export * from './viewModel';

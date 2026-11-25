@@ -31,6 +31,8 @@ export interface UndercoverGamePanelParams {
   resultFile?: string;
   /** Voting phases: the node whose completion publishes this round's ballots. */
   voteTallyNodeId?: string;
+  /** Multi-Human games: where each Human's private word entry lives (#2609). */
+  privateWord?: { contextKey: string; scopeLevel: 'session' };
 }
 export interface PanelAction { type: 'send_message'; content: string }
 export interface UndercoverGamePanelProps extends Partial<UndercoverGamePanelParams> {
