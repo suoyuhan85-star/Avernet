@@ -68,7 +68,7 @@ uc begin --session "$session_id" --referee-uuid "$referee_uuid"
 秒里人类正盯着屏幕等第一句话，一条参数写错的命令要多烧一个来回，而且报错本身也会
 被转发进群。
 
-配置项从 session 输入 / 群组协作目标里解析，用 `--difficulty` / `--undercover` / `--max-rounds` 传给它；缺项用默认值，不要为配置追问玩家。
+配置项从 session 输入 / 群组协作目标 / 人类的消息里解析，用 `--difficulty` / `--undercover` / `--max-rounds` 传给它；人类指定总人数（如"5 人局"）时加 `--players N`（含人类，4～8）；缺项用默认值，不要为配置追问玩家。
 
 - `human_present: false` → 说"加入提示"那段，结束激活。人类点完"加入当前会话"会发消息过来，届时重走 S0。
 - `human_present: true` → 记下返回里的 `init_command`，说开场白，请人类回一句"开始"。**这一步不 init**——人类可能还想先问问规则。

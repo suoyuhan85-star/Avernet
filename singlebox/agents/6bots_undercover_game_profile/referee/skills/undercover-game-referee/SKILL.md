@@ -65,7 +65,7 @@ BCS_AUTH_FAILED / BCS_FORBIDDEN / 身份或名单不符：报告故障并结束�
 
 | 状态 / 消息 | 本次动作 |
 | --- | --- |
-| NO_GAME | `uc begin --session "$session_id" --referee-uuid "$referee_uuid"`；human 未 Present 时提示加入；已加入则说开场规则，等待“开始” |
+| NO_GAME | `uc begin --session "$session_id" --referee-uuid "$referee_uuid"`（人类指定总人数如“5 人局”时加 `--players 5`）；human 未 Present 时提示加入；已加入则说开场规则，等待“开始” |
 | AWAIT_START + 人类“开始” | 执行 begin 返回的 init_command；在工具调用前的消息中告诉 human 座位和 human_word（多人类局 init 返回 `word_delivery: group_context`、没有 human_word：只告诉每位人类座位号，说明词在各自副屏私密显示，**群里不说任何人的词**）；最后 `uc open-round --session "$session_id"` |
 | AWAIT_PK_SPEAK_START + 开票稿回灌 | `uc open-round --session "$session_id"` 开始同轮 PK 发言，结束 |
 | AWAIT_PK_VOTE_START + 汇总稿回灌 | `uc open-vote --session "$session_id"` 开始 PK 投票，结束 |

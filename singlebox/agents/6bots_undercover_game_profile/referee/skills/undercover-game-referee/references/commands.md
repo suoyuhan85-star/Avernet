@@ -66,7 +66,7 @@ GroupContext 里抄。
 ### `begin`
 
 ```bash
-uc begin --session S --referee-uuid R [--group G] [--difficulty medium] [--undercover 1] [--max-rounds 6]
+uc begin --session S --referee-uuid R [--group G] [--difficulty medium] [--undercover 1] [--max-rounds 6] [--players N]
 ```
 
 `R` 必须来自本次 BCS 投递的 `GroupContext.recipient`，文本上下文取「你的身份」中的 ID。
